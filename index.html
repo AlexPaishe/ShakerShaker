@@ -117,3 +117,121 @@
   </script>
 </body>
 </html>
+📌 Что изменено:
+
+Полностью убрал лишние блоки (лого, футер, fullscreen-кнопку) → билд только канвас на весь экран.
+
+Добавил чистую проверку ориентации: если телефон вертикально → чёрный экран с сообщением.
+
+object-fit: cover; гарантирует, что канвас всегда заполнит экран без полос.
+
+Лоадер максимально упрощён → просто текст в центре.
+
+Unity получает deviceType через SendMessage.
+
+Хочешь, я добавлю ещё экран-старта (нажатие перед запуском, чтобы звук сразу работал)?
+
+
+
+
+
+
+
+Вы сказали:
+не помогло
+
+
+ChatGPT сказал:
+Понял 👍
+У тебя Unity WebGL билд всё равно не растягивается корректно на весь экран, даёт полосы. Давай перепишем по-простому и без лишних слоёв (только то, что реально нужно для фуллскрина и ландшафта).
+
+Попробуй этот минимальный вариант:
+
+html
+Копировать
+Редактировать
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <title>Unity WebGL Fullscreen</title>
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      touch-action: none;
+    }
+    #unity-canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      object-fit: cover; /* 🔥 растягивает без чёрных полос */
+      background: black;
+    }
+    #orientation-message {
+      position: fixed;
+      inset: 0;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      background: rgba(0,0,0,0.9);
+      color: white;
+      font-size: 20px;
+      text-align: center;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas"></canvas>
+  <div id="orientation-message">
+    <p>Пожалуйста, переверните устройство в горизонтальную ориентацию</p>
+  </div>
+
+  <script>
+    const canvas = document.querySelector("#unity-canvas");
+    const orientationMessage = document.querySelector("#orientation-message");
+
+    function checkOrientation() {
+      if (window.innerWidth < window.innerHeight) {
+        orientationMessage.style.display = "flex";
+      } else {
+        orientationMessage.style.display = "none";
+      }
+    }
+    window.addEventListener("resize", checkOrientation);
+    window.addEventListener("orientationchange", checkOrientation);
+    checkOrientation();
+
+    const buildUrl = "Build";
+    const loaderUrl = buildUrl + "/Shaker.loader.js";
+    const config = {
+      dataUrl: buildUrl + "/Shaker.data",
+      frameworkUrl: buildUrl + "/Shaker.framework.js",
+      codeUrl: buildUrl + "/Shaker.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "goga",
+      productName: "shakeshooters",
+      productVersion: "0.0.0.1",
+      matchWebGLToCanvasSize: true,
+      devicePixelRatio: window.devicePixelRatio
+    };
+
+    const script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = () => {
+      createUnityInstance(canvas, config).then((unityInstance) => {
+        window.unityInstance = unityInstance;
+      }).catch((message) => {
+        alert(message);
+      });
+    };
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
