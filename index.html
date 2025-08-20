@@ -24,15 +24,17 @@
       top: 0; left: 0;
       width: 100%;
       height: 100%;
-z-index: 1;
+      z-index: 1;
       display: flex;
       justify-content: center;
       align-items: center;
     }
     #unity-canvas {
+      position: fixed !important;
+      top: 0; left: 0; right: 0; bottom: 0;
       width: 100% !important;
       height: 100% !important;
-      object-fit: fill; /* Заполняет экран, обрезает края */
+      object-fit: fill; /* Заполняет весь экран, может слегка искажать */
     }
     #orientation-message {
       position: fixed;
@@ -91,7 +93,6 @@ z-index: 1;
 
   <!-- Контейнер Unity -->
   <div id="unity-container" class="unity-desktop">
-    <!-- УБРАНЫ width и height — теперь масштабируется через CSS -->
     <canvas id="unity-canvas" tabindex="-1"></canvas>
     <div id="unity-loading-bar">
       <div id="unity-logo"></div>
@@ -117,7 +118,6 @@ z-index: 1;
     var orientationMessage = document.getElementById("orientation-message");
     var startScreen = document.getElementById("start-screen");
 
-    // Флаг: пользователь уже коснулся
     let startScreenTouched = false;
 
     function unityShowBanner(msg, type) {
@@ -167,11 +167,9 @@ z-index: 1;
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 200));
 
-    // Обработка первого касания
     startScreen.addEventListener('touchstart', function () {
       startScreenTouched = true;
       this.remove();
-
       if (window.unityInstance) {
         window.unityInstance.SetFullscreen(1);
       }
@@ -181,7 +179,6 @@ z-index: 1;
       this.remove();
     });
 
-    // Загрузка Unity
     var buildUrl = "Build";
     var loaderUrl = buildUrl + "/Shaker.loader.js";
     var config = {
@@ -193,7 +190,8 @@ z-index: 1;
       productName: "shakeshooters",
       productVersion: "0.0.0.1",
       showBanner: unityShowBanner,
-      matchWebGLToCanvasSize: true  // 🔥 КЛЮЧЕВАЯ СТРОКА: растягивает рендер под размер canvas
+      matchWebGLToCanvasSize: true,
+      devicePixelRatio: 1  // 🔥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: предотвращает перерасход памяти и полосы
     };
 
     var script = document.createElement("script");
@@ -204,16 +202,11 @@ z-index: 1;
       }).then((unityInstance) => {
         window.unityInstance = unityInstance;
         loadingBar.style.display = "none";
-
         fullscreenButton.onclick = () => unityInstance.SetFullscreen(1);
-
         unityInstance.SendMessage('DeviceCheckerMono', 'SetTypeDevice', deviceType);
-
-        // Если пользователь уже коснулся — включаем полноэкранный режим
         if (startScreenTouched) {
           unityInstance.SetFullscreen(1);
         }
-
       }).catch((message) => {
         alert(message);
       });
