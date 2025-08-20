@@ -34,7 +34,8 @@
       top: 0; left: 0; right: 0; bottom: 0;
       width: 100% !important;
       height: 100% !important;
-      object-fit: fill; /* Заполняет весь экран, может слегка искажать */
+      object-fit: cover;   /* 🔥 заменил fill → cover */
+      background: black;   /* на случай, если Unity не успел отрендерить */
     }
     #orientation-message {
       position: fixed;
@@ -149,8 +150,8 @@
       container.className = "unity-mobile";
       canvas.className = "unity-mobile";
     } else {
-      canvas.style.width = "1920px";
-      canvas.style.height = "1080px";
+      canvas.style.width = "100%";   // 🔥 вместо фиксированного 1920px
+      canvas.style.height = "100%";
     }
 
     loadingBar.style.display = "block";
@@ -191,7 +192,7 @@
       productVersion: "0.0.0.1",
       showBanner: unityShowBanner,
       matchWebGLToCanvasSize: true,
-      devicePixelRatio: 1  // 🔥 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: предотвращает перерасход памяти и полосы
+      devicePixelRatio: 1
     };
 
     var script = document.createElement("script");
