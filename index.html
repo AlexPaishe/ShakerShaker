@@ -2,159 +2,7 @@
 <html lang="en-us">
 <head>
   <meta charset="utf-8">
-  <title>Unity WebGL Player | shakeshooters</title>
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, minimal-ui">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-
-  <style>
-    * { margin: 0; padding: 0; }
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: black;
-      touch-action: manipulation;
-    }
-    #unity-container, #unity-canvas {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-    }
-    #unity-canvas {
-      object-fit: cover;  /* Всегда заполняет экран */
-      background: black;
-    }
-    #loading-bar {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-family: Arial, sans-serif;
-    }
-    #orientation-message {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      background: #000;
-      color: #fff;
-      font-size: 20px;
-      text-align: center;
-      z-index: 9999;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Сообщение о повороте -->
-  <div id="orientation-message">
-    Пожалуйста, переведите устройство в <b>горизонтальную ориентацию</b>
-  </div>
-
-  <!-- Контейнер Unity -->
-  <div id="unity-container">
-    <canvas id="unity-canvas" tabindex="-1"></canvas>
-    <div id="loading-bar">Загрузка...</div>
-  </div>
-
-  <script>
-    const canvas = document.querySelector("#unity-canvas");
-    const loadingBar = document.querySelector("#loading-bar");
-    const orientationMessage = document.querySelector("#orientation-message");
-
-    // Проверка на ориентацию (для телефонов)
-    function checkOrientation() {
-      if (window.innerWidth < window.innerHeight) {
-        orientationMessage.style.display = "flex";
-      } else {
-        orientationMessage.style.display = "none";
-      }
-    }
-    window.addEventListener("resize", checkOrientation);
-    window.addEventListener("orientationchange", checkOrientation);
-    checkOrientation();
-
-    // Определение устройства
-    function isMobile() {
-      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
-    const deviceType = isMobile() ? "Mobile" : "Desktop";
-
-    // Пути к билду
-    const buildUrl = "Build";
-    const loaderUrl = buildUrl + "/Shaker.loader.js";
-    const config = {
-      dataUrl: buildUrl + "/Shaker.data",
-      frameworkUrl: buildUrl + "/Shaker.framework.js",
-      codeUrl: buildUrl + "/Shaker.wasm",
-      streamingAssetsUrl: "StreamingAssets",
-      companyName: "goga",
-      productName: "shakeshooters",
-      productVersion: "0.0.0.1",
-      matchWebGLToCanvasSize: true,
-      devicePixelRatio: 1
-    };
-
-    // Загрузка Unity
-    const script = document.createElement("script");
-    script.src = loaderUrl;
-    script.onload = () => {
-      createUnityInstance(canvas, config, (progress) => {
-        loadingBar.innerText = "Загрузка: " + Math.round(progress * 100) + "%";
-      }).then((unityInstance) => {
-        loadingBar.style.display = "none";
-        window.unityInstance = unityInstance;
-        // Передаём тип устройства в Unity
-        unityInstance.SendMessage('DeviceCheckerMono', 'SetTypeDevice', deviceType);
-      }).catch((message) => {
-        alert(message);
-      });
-    };
-    document.body.appendChild(script);
-  </script>
-</body>
-</html>
-📌 Что изменено:
-
-Полностью убрал лишние блоки (лого, футер, fullscreen-кнопку) → билд только канвас на весь экран.
-
-Добавил чистую проверку ориентации: если телефон вертикально → чёрный экран с сообщением.
-
-object-fit: cover; гарантирует, что канвас всегда заполнит экран без полос.
-
-Лоадер максимально упрощён → просто текст в центре.
-
-Unity получает deviceType через SendMessage.
-
-Хочешь, я добавлю ещё экран-старта (нажатие перед запуском, чтобы звук сразу работал)?
-
-
-
-
-
-
-
-Вы сказали:
-не помогло
-
-
-ChatGPT сказал:
-Понял 👍
-У тебя Unity WebGL билд всё равно не растягивается корректно на весь экран, даёт полосы. Давай перепишем по-простому и без лишних слоёв (только то, что реально нужно для фуллскрина и ландшафта).
-
-Попробуй этот минимальный вариант:
-
-html
-Копировать
-Редактировать
-<!DOCTYPE html>
-<html lang="en-us">
-<head>
-  <meta charset="utf-8">
-  <title>Unity WebGL Fullscreen</title>
+  <title>Unity WebGL Adaptive Resolution</title>
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
   <style>
     * { margin: 0; padding: 0; }
@@ -163,13 +11,9 @@ html
       height: 100%;
       overflow: hidden;
       background: #000;
-      touch-action: none;
     }
     #unity-canvas {
-      width: 100vw;
-      height: 100vh;
       display: block;
-      object-fit: cover; /* 🔥 растягивает без чёрных полос */
       background: black;
     }
     #orientation-message {
@@ -197,6 +41,11 @@ html
     const canvas = document.querySelector("#unity-canvas");
     const orientationMessage = document.querySelector("#orientation-message");
 
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
     function checkOrientation() {
       if (window.innerWidth < window.innerHeight) {
         orientationMessage.style.display = "flex";
@@ -204,8 +53,21 @@ html
         orientationMessage.style.display = "none";
       }
     }
-    window.addEventListener("resize", checkOrientation);
-    window.addEventListener("orientationchange", checkOrientation);
+
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      checkOrientation();
+    });
+
+    window.addEventListener("orientationchange", () => {
+      setTimeout(() => {
+        resizeCanvas();
+        checkOrientation();
+      }, 200);
+    });
+
+    // первый вызов
+    resizeCanvas();
     checkOrientation();
 
     const buildUrl = "Build";
@@ -218,7 +80,7 @@ html
       companyName: "goga",
       productName: "shakeshooters",
       productVersion: "0.0.0.1",
-      matchWebGLToCanvasSize: true,
+      matchWebGLToCanvasSize: false, // 🔥 выключаем автоподгон Unity
       devicePixelRatio: window.devicePixelRatio
     };
 
