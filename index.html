@@ -2,218 +2,133 @@
 <html lang="en-us">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>Unity WebGL Player | shakeshooters</title>
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, minimal-ui">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="shortcut icon" href="TemplateData/favicon.ico">
   <link rel="stylesheet" href="TemplateData/style.css">
-
   <style>
-    * { margin: 0; padding: 0; }
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-      touch-action: manipulation;
-    }
-    #unity-container {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    #unity-canvas {
-      position: fixed !important;
-      top: 0; left: 0; right: 0; bottom: 0;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover;   /* 🔥 заменил fill → cover */
-      background: black;   /* на случай, если Unity не успел отрендерить */
-    }
+    * { margin:0; padding:0; }
+    html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-action: manipulation; }
+    #unity-container { position:fixed; top:0; left:0; width:100%; height:100%; display:flex; justify-content:center; align-items:center; }
+    #unity-canvas { width:100%; height:100%; background:black; object-fit:cover; }
     #orientation-message {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      font-size: 20px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      z-index: 9999;
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:#000; color:#fff; font-family:Arial,sans-serif; font-size:20px;
+      display:flex; justify-content:center; align-items:center; text-align:center; flex-direction:column;
+      z-index:9999; display:none;
     }
-    #orientation-message img {
-      width: 100px;
-      margin: 20px 0;
-      animation: rotate 1.5s infinite;
-    }
-    @keyframes rotate {
-      0% { transform: rotate(0deg); }
-      50% { transform: rotate(180deg); }
-      100% { transform: rotate(360deg); }
-    }
+    #orientation-message img { width:100px; margin:20px 0; animation:rotate 1.5s infinite; }
+    @keyframes rotate { 0%{transform:rotate(0deg);}50%{transform:rotate(180deg);}100%{transform:rotate(360deg);} }
     #start-screen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      color: white;
-      font-size: 24px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      cursor: pointer;
+      position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9);
+      color:white; font-size:24px; display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:10000; cursor:pointer;
     }
   </style>
 </head>
 <body>
 
-  <!-- Сообщение о повороте -->
-  <div id="orientation-message" style="display: none;">
-    <p>Пожалуйста, поверните телефон в <strong>горизонтальную ориентацию</strong></p>
-    <img src="https://img.icons8.com/ios-filled/100/FFFFFF/rotate-screen.png" alt="Rotate">
+<div id="orientation-message">
+  <p>Пожалуйста, поверните телефон в <strong>портретную ориентацию</strong></p>
+  <img src="https://img.icons8.com/ios-filled/100/FFFFFF/rotate-screen.png" alt="Rotate">
+</div>
+
+<div id="start-screen">
+  <p>Коснитесь, чтобы начать</p>
+  <div style="font-size:14px; margin-top:10px;">(активирует звук и полноэкранный режим)</div>
+</div>
+
+<div id="unity-container">
+  <canvas id="unity-canvas" tabindex="-1"></canvas>
+  <div id="unity-loading-bar">
+    <div id="unity-logo"></div>
+    <div id="unity-progress-bar-empty"><div id="unity-progress-bar-full"></div></div>
   </div>
-
-  <!-- Экран старта -->
-  <div id="start-screen">
-    <p>Коснитесь, чтобы начать</p>
-    <div style="font-size: 14px; margin-top: 10px;">(активирует звук и полноэкранный режим)</div>
+  <div id="unity-warning"></div>
+  <div id="unity-footer">
+    <div id="unity-webgl-logo"></div>
+    <div id="unity-fullscreen-button"></div>
+    <div id="unity-build-title">shakeshooters</div>
   </div>
+</div>
 
-  <!-- Контейнер Unity -->
-  <div id="unity-container" class="unity-desktop">
-    <canvas id="unity-canvas" tabindex="-1"></canvas>
-    <div id="unity-loading-bar">
-      <div id="unity-logo"></div>
-      <div id="unity-progress-bar-empty">
-        <div id="unity-progress-bar-full"></div>
-      </div>
-    </div>
-    <div id="unity-warning"></div>
-    <div id="unity-footer">
-      <div id="unity-webgl-logo"></div>
-      <div id="unity-fullscreen-button"></div>
-      <div id="unity-build-title">shakeshooters</div>
-    </div>
-  </div>
+<script>
+  const container = document.getElementById("unity-container");
+  const canvas = document.getElementById("unity-canvas");
+  const loadingBar = document.getElementById("unity-loading-bar");
+  const progressBarFull = document.getElementById("unity-progress-bar-full");
+  const fullscreenButton = document.getElementById("unity-fullscreen-button");
+  const warningBanner = document.getElementById("unity-warning");
+  const orientationMessage = document.getElementById("orientation-message");
+  const startScreen = document.getElementById("start-screen");
 
-  <script>
-    var container = document.querySelector("#unity-container");
-    var canvas = document.querySelector("#unity-canvas");
-    var loadingBar = document.querySelector("#unity-loading-bar");
-    var progressBarFull = document.querySelector("#unity-progress-bar-full");
-    var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-    var warningBanner = document.querySelector("#unity-warning");
-    var orientationMessage = document.getElementById("orientation-message");
-    var startScreen = document.getElementById("start-screen");
+  let startScreenTouched = false;
 
-    let startScreenTouched = false;
+  function unityShowBanner(msg,type){
+    var div=document.createElement('div');
+    div.innerHTML=msg;
+    warningBanner.appendChild(div);
+    if(type==='error') div.style='background:red;padding:10px;';
+    else if(type==='warning') div.style='background:yellow;padding:10px;';
+    setTimeout(()=>{warningBanner.removeChild(div);},5000);
+  }
 
-    function unityShowBanner(msg, type) {
-      function updateBannerVisibility() {
-        warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-      }
-      var div = document.createElement('div');
-      div.innerHTML = msg;
-      warningBanner.appendChild(div);
-      if (type === 'error') {
-        div.style = 'background: red; padding: 10px;';
-      } else {
-        if (type === 'warning') div.style = 'background: yellow; padding: 10px;';
-        setTimeout(() => {
-          warningBanner.removeChild(div);
-          updateBannerVisibility();
-        }, 5000);
-      }
-      updateBannerVisibility();
-    }
+  function isMobile(){return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);}
+  const deviceType = isMobile() ? "Mobile" : "Desktop";
 
-    function isMobile() {
-      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
+  loadingBar.style.display = "block";
 
-    var deviceType = isMobile() ? "Mobile" : "Desktop";
-
-    if (isMobile()) {
-      container.className = "unity-mobile";
-      canvas.className = "unity-mobile";
+  function checkOrientation(){
+    if(window.innerHeight >= window.innerWidth){ // портрет
+      orientationMessage.style.display = "none";
+      container.style.display = "flex";
     } else {
-      canvas.style.width = "100%";   // 🔥 вместо фиксированного 1920px
-      canvas.style.height = "100%";
+      orientationMessage.style.display = "flex";
+      container.style.display = "none";
     }
+  }
 
-    loadingBar.style.display = "block";
+  window.addEventListener('load', checkOrientation);
+  window.addEventListener('resize', checkOrientation);
+  window.addEventListener('orientationchange', ()=>setTimeout(checkOrientation,200));
 
-    function checkOrientation() {
-      if (window.innerWidth > window.innerHeight) {
-        orientationMessage.style.display = "none";
-      } else {
-        orientationMessage.style.display = "flex";
-      }
-    }
+  startScreen.addEventListener('touchstart', function(){
+    startScreenTouched = true; this.remove();
+    if(window.unityInstance) window.unityInstance.SetFullscreen(1);
+  });
+  startScreen.addEventListener('click', function(){ this.remove(); });
 
-    window.addEventListener('load', checkOrientation);
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 200));
+  const buildUrl = "Build";
+  const loaderUrl = buildUrl + "/Shaker.loader.js";
+  const config = {
+    dataUrl: buildUrl + "/Shaker.data",
+    frameworkUrl: buildUrl + "/Shaker.framework.js",
+    codeUrl: buildUrl + "/Shaker.wasm",
+    streamingAssetsUrl: "StreamingAssets",
+    companyName: "goga",
+    productName: "shakeshooters",
+    productVersion: "0.0.0.1",
+    showBanner: unityShowBanner,
+    matchWebGLToCanvasSize: true,
+    devicePixelRatio: 1
+  };
 
-    startScreen.addEventListener('touchstart', function () {
-      startScreenTouched = true;
-      this.remove();
-      if (window.unityInstance) {
-        window.unityInstance.SetFullscreen(1);
-      }
-    });
+  const script = document.createElement("script");
+  script.src = loaderUrl;
+  script.onload = ()=>{
+    createUnityInstance(canvas, config, progress=>{
+      progressBarFull.style.width=100*progress+'%';
+    }).then(unityInstance=>{
+      window.unityInstance=unityInstance;
+      loadingBar.style.display="none";
+      fullscreenButton.onclick=()=>unityInstance.SetFullscreen(1);
+      unityInstance.SendMessage('DeviceCheckerMono','SetTypeDevice',deviceType);
+      if(startScreenTouched) unityInstance.SetFullscreen(1);
+    }).catch(alert);
+  };
+  document.body.appendChild(script);
+</script>
 
-    startScreen.addEventListener('click', function () {
-      this.remove();
-    });
-
-    var buildUrl = "Build";
-    var loaderUrl = buildUrl + "/Shaker.loader.js";
-    var config = {
-      dataUrl: buildUrl + "/Shaker.data",
-      frameworkUrl: buildUrl + "/Shaker.framework.js",
-      codeUrl: buildUrl + "/Shaker.wasm",
-      streamingAssetsUrl: "StreamingAssets",
-      companyName: "goga",
-      productName: "shakeshooters",
-      productVersion: "0.0.0.1",
-      showBanner: unityShowBanner,
-      matchWebGLToCanvasSize: true,
-      devicePixelRatio: 1
-    };
-
-    var script = document.createElement("script");
-    script.src = loaderUrl;
-    script.onload = () => {
-      createUnityInstance(canvas, config, (progress) => {
-        progressBarFull.style.width = 100 * progress + "%";
-      }).then((unityInstance) => {
-        window.unityInstance = unityInstance;
-        loadingBar.style.display = "none";
-        fullscreenButton.onclick = () => unityInstance.SetFullscreen(1);
-        unityInstance.SendMessage('DeviceCheckerMono', 'SetTypeDevice', deviceType);
-        if (startScreenTouched) {
-          unityInstance.SetFullscreen(1);
-        }
-      }).catch((message) => {
-        alert(message);
-      });
-    };
-
-    document.body.appendChild(script);
-  </script>
 </body>
 </html>
