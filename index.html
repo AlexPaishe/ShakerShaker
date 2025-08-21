@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>Unity WebGL Player | shakeshooters</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimal-ui">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, minimal-ui">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="shortcut icon" href="TemplateData/favicon.ico">
@@ -15,38 +15,26 @@
     html, body {
       width: 100%;
       height: 100%;
-      overflow: auto;
+      overflow: hidden;
       background: #000;
-      font-family: Arial, sans-serif;
       touch-action: manipulation;
     }
 
-    .container-wrapper {
+    #unity-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-
-    #unity-container {
-      position: relative;
-      width: 1280px;
-      height: 720px;
-      max-width: 100%;
-      max-height: 90vh;
-      background: #111;
-      border: 2px solid #444;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-      overflow: hidden;
+      z-index: 1;
     }
 
     #unity-canvas {
       width: 100% !important;
       height: 100% !important;
-      object-fit: cover; /* Заполняет контейнер, может обрезать края */
+      object-fit: cover;
       background: black;
     }
 
@@ -55,6 +43,7 @@
       top: 0; left: 0; right: 0; bottom: 0;
       background: #000;
       color: #fff;
+      font-family: Arial, sans-serif;
       font-size: 20px;
       padding: 20px;
       display: flex;
@@ -65,11 +54,13 @@
       z-index: 9999;
       display: none;
     }
+
     #orientation-message img {
       width: 100px;
       margin: 20px 0;
       animation: rotate 1.5s infinite;
     }
+
     @keyframes rotate {
       0% { transform: rotate(0deg); }
       50% { transform: rotate(180deg); }
@@ -94,9 +85,9 @@
 </head>
 <body>
 
-  <!-- Сообщение: только в ландшафте -->
+  <!-- Сообщение: показывается, если экран в ландшафте -->
   <div id="orientation-message">
-    <p>Пожалуйста, поверните телефон в <strong>горизонтальную ориентацию</strong></p>
+    <p>Пожалуйста, поверните телефон в <strong>портретную ориентацию</strong></p>
     <img src="https://img.icons8.com/ios-filled/100/FFFFFF/rotate-screen.png" alt="Rotate">
   </div>
 
@@ -106,23 +97,20 @@
     <div style="font-size:14px; margin-top:10px;">(активирует звук)</div>
   </div>
 
-  <!-- Центрированный контейнер -->
-  <div class="container-wrapper">
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" tabindex="-1"></canvas>
-
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
+  <!-- Контейнер Unity -->
+  <div id="unity-container" class="unity-desktop">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="unity-loading-bar">
+      <div id="unity-logo"></div>
+      <div id="unity-progress-bar-empty">
+        <div id="unity-progress-bar-full"></div>
       </div>
-      <div id="unity-warning"></div>
-      <div id="unity-footer">
-        <div id="unity-webgl-logo"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">shakeshooters</div>
-      </div>
+    </div>
+    <div id="unity-warning"></div>
+    <div id="unity-footer">
+      <div id="unity-webgl-logo"></div>
+      <div id="unity-fullscreen-button"></div>
+      <div id="unity-build-title">shakeshooters</div>
     </div>
   </div>
 
@@ -164,20 +152,25 @@
 
     loadingBar.style.display = "block";
 
-    // Проверка ориентации: только ландшафт
+    // Проверка ориентации: портрет = ок, ландшафт = показать сообщение
     function checkOrientation() {
+      // Если ширина > высоты → ландшафт → блокируем
       if (window.innerWidth > window.innerHeight) {
-        orientationMessage.style.display = "none";
-      } else {
         orientationMessage.style.display = "flex";
+        container.style.display = "none";
+      } else {
+        // Портрет → показываем игру
+        orientationMessage.style.display = "none";
+        container.style.display = "flex";
       }
     }
 
+    // Запускаем при загрузке, изменении размера и повороте
     window.addEventListener('load', checkOrientation);
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 200));
 
-    // Обработка касания — активация звука и полноэкранного режима
+    // Обработка старта
     startScreen.addEventListener('touchstart', function () {
       startScreenTouched = true;
       this.remove();
@@ -202,8 +195,8 @@
       productName: "shakeshooters",
       productVersion: "0.0.0.1",
       showBanner: unityShowBanner,
-      matchWebGLToCanvasSize: true,  // 🔥 Ключевое: растягивает под размер canvas
-      devicePixelRatio: 1           // 🔥 Улучшает производительность и качество на мобильных
+      matchWebGLToCanvasSize: true,
+      devicePixelRatio: 1
     };
 
     const script = document.createElement("script");
