@@ -9,71 +9,6 @@
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="shortcut icon" href="TemplateData/favicon.ico">
   <link rel="stylesheet" href="TemplateData/style.css">
-
-  <style>
-    * { margin: 0; padding: 0; }
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-      touch-action: manipulation;
-    }
-    #unity-container {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-z-index: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    #unity-canvas {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: fill; /* Заполняет экран, обрезает края */
-    }
-    #orientation-message {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      font-size: 20px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      z-index: 9999;
-    }
-    #orientation-message img {
-      width: 100px;
-      margin: 20px 0;
-      animation: rotate 1.5s infinite;
-    }
-    @keyframes rotate {
-      0% { transform: rotate(0deg); }
-      50% { transform: rotate(180deg); }
-      100% { transform: rotate(360deg); }
-    }
-    #start-screen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      color: white;
-      font-size: 24px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      cursor: pointer;
-    }
-  </style>
 </head>
 <body>
   <!-- Экран старта -->
@@ -174,10 +109,9 @@ z-index: 1;
       this.remove();
     });
 
-    // Загрузка Unity
-    var buildUrl = "Build";
-    var loaderUrl = buildUrl + "/Shaker.loader.js";
-    var config = {
+    const buildUrl = "Build";
+    const loaderUrl = buildUrl + "/Shaker.loader.js";
+    const config = {
       dataUrl: buildUrl + "/Shaker.data",
       frameworkUrl: buildUrl + "/Shaker.framework.js",
       codeUrl: buildUrl + "/Shaker.wasm",
@@ -186,10 +120,11 @@ z-index: 1;
       productName: "shakeshooters",
       productVersion: "0.0.0.1",
       showBanner: unityShowBanner,
-      matchWebGLToCanvasSize: true  // 🔥 КЛЮЧЕВАЯ СТРОКА: растягивает рендер под размер canvas
+      matchWebGLToCanvasSize: true,
+      devicePixelRatio: 1
     };
 
-    var script = document.createElement("script");
+    const script = document.createElement("script");
     script.src = loaderUrl;
     script.onload = () => {
       createUnityInstance(canvas, config, (progress) => {
@@ -197,21 +132,11 @@ z-index: 1;
       }).then((unityInstance) => {
         window.unityInstance = unityInstance;
         loadingBar.style.display = "none";
-
         fullscreenButton.onclick = () => unityInstance.SetFullscreen(1);
-
         unityInstance.SendMessage('DeviceCheckerMono', 'SetTypeDevice', deviceType);
-
-        // Если пользователь уже коснулся — включаем полноэкранный режим
-        if (startScreenTouched) {
-          unityInstance.SetFullscreen(1);
-        }
-
-      }).catch((message) => {
-        alert(message);
-      });
+        if (startScreenTouched) unityInstance.SetFullscreen(1);
+      }).catch(alert);
     };
-
     document.body.appendChild(script);
   </script>
 </body>
