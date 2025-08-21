@@ -32,12 +32,9 @@
     }
 
     #unity-canvas {
-      /* Используем aspect-ratio, чтобы сохранить пропорции */
-      aspect-ratio: 9 / 16; /* Портрет: 9:16 или 1080x1920 */
-      width: 100vw;
-      max-width: 100%;
-      max-height: 100vh;
-      object-fit: cover; /* Заполняет контейнер, обрезает края */
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain; /* 🔹 чтобы не обрезалось */
       background: black;
     }
 
@@ -88,19 +85,16 @@
 </head>
 <body>
 
-  <!-- Сообщение: показывается, если экран в ландшафте -->
   <div id="orientation-message">
     <p>Пожалуйста, поверните телефон в <strong>портретную ориентацию</strong></p>
     <img src="https://img.icons8.com/ios-filled/100/FFFFFF/rotate-screen.png" alt="Rotate">
   </div>
 
-  <!-- Экран старта -->
   <div id="start-screen">
     <p>Коснитесь, чтобы начать</p>
     <div style="font-size:14px; margin-top:10px;">(активирует звук)</div>
   </div>
 
-  <!-- Контейнер Unity -->
   <div id="unity-container" class="unity-desktop">
     <canvas id="unity-canvas" tabindex="-1"></canvas>
     <div id="unity-loading-bar">
@@ -136,15 +130,9 @@
       const div = document.createElement('div');
       div.innerHTML = msg;
       warningBanner.appendChild(div);
-      if (type === 'error') {
-        div.style = 'background: red; padding: 10px;';
-      } else if (type === 'warning') {
-        div.style = 'background: yellow; padding: 10px;';
-      }
-      setTimeout(() => {
-        warningBanner.removeChild(div);
-        updateBannerVisibility();
-      }, 5000);
+      if (type === 'error') div.style = 'background: red; padding: 10px;';
+      else if (type === 'warning') div.style = 'background: yellow; padding: 10px;';
+      setTimeout(() => { warningBanner.removeChild(div); updateBannerVisibility(); }, 5000);
     }
 
     function isMobile() {
@@ -152,10 +140,27 @@
     }
 
     const deviceType = isMobile() ? "Mobile" : "Desktop";
-
     loadingBar.style.display = "block";
 
-    // Проверка ориентации: ландшафт → блокируем
+    // 🔹 Динамическое масштабирование Canvas
+    function resizeCanvas() {
+      const unityWidth = 1080;
+      const unityHeight = 1920;
+      const windowRatio = window.innerWidth / window.innerHeight;
+      const unityRatio = unityWidth / unityHeight;
+
+      if (windowRatio > unityRatio) {
+        canvas.style.height = window.innerHeight + "px";
+        canvas.style.width = (window.innerHeight * unityRatio) + "px";
+      } else {
+        canvas.style.width = window.innerWidth + "px";
+        canvas.style.height = (window.innerWidth / unityRatio) + "px";
+      }
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("load", resizeCanvas);
+
     function checkOrientation() {
       if (window.innerWidth > window.innerHeight) {
         orientationMessage.style.display = "flex";
@@ -163,6 +168,7 @@
       } else {
         orientationMessage.style.display = "none";
         container.style.display = "flex";
+        resizeCanvas();
       }
     }
 
@@ -170,18 +176,12 @@
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 200));
 
-    // Обработка старта
     startScreen.addEventListener('touchstart', function () {
       startScreenTouched = true;
       this.remove();
-      if (window.unityInstance) {
-        window.unityInstance.SetFullscreen(1);
-      }
+      if (window.unityInstance) window.unityInstance.SetFullscreen(1);
     });
-
-    startScreen.addEventListener('click', function () {
-      this.remove();
-    });
+    startScreen.addEventListener('click', function () { this.remove(); });
 
     // Настройки Unity
     const buildUrl = "Build";
@@ -209,12 +209,9 @@
         loadingBar.style.display = "none";
         fullscreenButton.onclick = () => unityInstance.SetFullscreen(1);
         unityInstance.SendMessage('DeviceCheckerMono', 'SetTypeDevice', deviceType);
-        if (startScreenTouched) {
-          unityInstance.SetFullscreen(1);
-        }
+        if (startScreenTouched) unityInstance.SetFullscreen(1);
       }).catch(alert);
     };
-
     document.body.appendChild(script);
   </script>
 </body>
