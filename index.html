@@ -32,9 +32,12 @@
     }
 
     #unity-canvas {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover;
+      /* Используем aspect-ratio, чтобы сохранить пропорции */
+      aspect-ratio: 9 / 16; /* Портрет: 9:16 или 1080x1920 */
+      width: 100vw;
+      max-width: 100%;
+      max-height: 100vh;
+      object-fit: cover; /* Заполняет контейнер, обрезает края */
       background: black;
     }
 
@@ -152,20 +155,17 @@
 
     loadingBar.style.display = "block";
 
-    // Проверка ориентации: портрет = ок, ландшафт = показать сообщение
+    // Проверка ориентации: ландшафт → блокируем
     function checkOrientation() {
-      // Если ширина > высоты → ландшафт → блокируем
       if (window.innerWidth > window.innerHeight) {
         orientationMessage.style.display = "flex";
         container.style.display = "none";
       } else {
-        // Портрет → показываем игру
         orientationMessage.style.display = "none";
         container.style.display = "flex";
       }
     }
 
-    // Запускаем при загрузке, изменении размера и повороте
     window.addEventListener('load', checkOrientation);
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 200));
