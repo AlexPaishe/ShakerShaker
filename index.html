@@ -34,37 +34,8 @@
     #unity-canvas {
       width: 100% !important;
       height: 100% !important;
-      object-fit: contain; /* 🔹 чтобы не обрезалось */
+      object-fit: contain; /* Canvas масштабируется без обрезки */
       background: black;
-    }
-
-    #orientation-message {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      font-size: 20px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      z-index: 9999;
-      display: none;
-    }
-
-    #orientation-message img {
-      width: 100px;
-      margin: 20px 0;
-      animation: rotate 1.5s infinite;
-    }
-
-    @keyframes rotate {
-      0% { transform: rotate(0deg); }
-      50% { transform: rotate(180deg); }
-      100% { transform: rotate(360deg); }
     }
 
     #start-screen {
@@ -84,11 +55,6 @@
   </style>
 </head>
 <body>
-
-  <div id="orientation-message">
-    <p>Пожалуйста, поверните телефон в <strong>портретную ориентацию</strong></p>
-    <img src="https://img.icons8.com/ios-filled/100/FFFFFF/rotate-screen.png" alt="Rotate">
-  </div>
 
   <div id="start-screen">
     <p>Коснитесь, чтобы начать</p>
@@ -112,27 +78,22 @@
   </div>
 
   <script>
-    const container = document.getElementById("unity-container");
     const canvas = document.getElementById("unity-canvas");
     const loadingBar = document.getElementById("unity-loading-bar");
     const progressBarFull = document.getElementById("unity-progress-bar-full");
     const fullscreenButton = document.getElementById("unity-fullscreen-button");
-    const warningBanner = document.getElementById("unity-warning");
-    const orientationMessage = document.getElementById("orientation-message");
     const startScreen = document.getElementById("start-screen");
 
     let startScreenTouched = false;
 
     function unityShowBanner(msg, type) {
-      function updateBannerVisibility() {
-        warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-      }
+      const warningBanner = document.getElementById("unity-warning");
       const div = document.createElement('div');
       div.innerHTML = msg;
       warningBanner.appendChild(div);
       if (type === 'error') div.style = 'background: red; padding: 10px;';
       else if (type === 'warning') div.style = 'background: yellow; padding: 10px;';
-      setTimeout(() => { warningBanner.removeChild(div); updateBannerVisibility(); }, 5000);
+      setTimeout(() => { warningBanner.removeChild(div); }, 5000);
     }
 
     function isMobile() {
@@ -160,21 +121,6 @@
 
     window.addEventListener("resize", resizeCanvas);
     window.addEventListener("load", resizeCanvas);
-
-    function checkOrientation() {
-      if (window.innerWidth > window.innerHeight) {
-        orientationMessage.style.display = "flex";
-        container.style.display = "none";
-      } else {
-        orientationMessage.style.display = "none";
-        container.style.display = "flex";
-        resizeCanvas();
-      }
-    }
-
-    window.addEventListener('load', checkOrientation);
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 200));
 
     startScreen.addEventListener('touchstart', function () {
       startScreenTouched = true;
